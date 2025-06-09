@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, Gift, Users } from 'lucide-react'
+import { formatBirthdayDate } from '@/lib/utils'
+import { toZonedTime } from 'date-fns-tz'
 
 interface User {
   id: string
@@ -38,9 +40,9 @@ export default function BirthdaysPage() {
           if (user.birthday) {
             const birthDate = new Date(user.birthday)
             // Use Central Time for month grouping
-            const monthName = birthDate.toLocaleDateString('en-US', { 
-              month: 'long',
-              timeZone: 'America/Chicago'
+            const birthdayInCT = toZonedTime(birthDate, 'America/Chicago')
+            const monthName = birthdayInCT.toLocaleDateString('en-US', { 
+              month: 'long'
             })
             
             if (!monthGroups[monthName]) {
@@ -54,15 +56,9 @@ export default function BirthdaysPage() {
         Object.keys(monthGroups).forEach(month => {
           monthGroups[month].sort((a, b) => {
             // Use Central Time for day comparison
-            const dayA = new Date(a.birthday).toLocaleDateString('en-US', { 
-              day: 'numeric',
-              timeZone: 'America/Chicago'
-            })
-            const dayB = new Date(b.birthday).toLocaleDateString('en-US', { 
-              day: 'numeric',
-              timeZone: 'America/Chicago'
-            })
-            return parseInt(dayA) - parseInt(dayB)
+            const birthdayA = toZonedTime(new Date(a.birthday), 'America/Chicago')
+            const birthdayB = toZonedTime(new Date(b.birthday), 'America/Chicago')
+            return birthdayA.getDate() - birthdayB.getDate()
           })
         })
         
@@ -90,10 +86,10 @@ export default function BirthdaysPage() {
 
   const formatBirthday = (birthday: string) => {
     const date = new Date(birthday)
-    return date.toLocaleDateString('en-US', {
+    const birthdayInCT = toZonedTime(date, 'America/Chicago')
+    return birthdayInCT.toLocaleDateString('en-US', {
       month: 'long',
-      day: 'numeric',
-      timeZone: 'America/Chicago'
+      day: 'numeric'
     })
   }
 
@@ -106,16 +102,20 @@ export default function BirthdaysPage() {
     const birthDate = new Date(birthday)
     const thisYear = today.getFullYear()
     
+    // Convert to Central Time for accurate comparison
+    const todayInCT = toZonedTime(today, 'America/Chicago')
+    const birthdayInCT = toZonedTime(birthDate, 'America/Chicago')
+    
     // Set the birthday to this year
-    const thisBirthday = new Date(thisYear, birthDate.getMonth(), birthDate.getDate())
+    const thisBirthday = new Date(thisYear, birthdayInCT.getMonth(), birthdayInCT.getDate())
     
     // If birthday has passed this year, check next year
-    if (thisBirthday < today) {
+    if (thisBirthday < todayInCT) {
       thisBirthday.setFullYear(thisYear + 1)
     }
     
     // Check if birthday is within next 30 days
-    const diffTime = thisBirthday.getTime() - today.getTime()
+    const diffTime = thisBirthday.getTime() - todayInCT.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     
     return diffDays <= 30 && diffDays >= 0
@@ -123,7 +123,7 @@ export default function BirthdaysPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading birthdays...</p>
@@ -136,44 +136,44 @@ export default function BirthdaysPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Link href="/" className="mr-4 text-gray-600 hover:text-gray-900">
-                <ArrowLeft className="h-6 w-6" />
+            <div className="flex items-center min-w-0 flex-1">
+              <Link href="/" className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 flex-shrink-0">
+                <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6" />
               </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <Gift className="h-6 w-6 text-purple-600 mr-2" />
-                  Community Birthdays
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 flex items-center">
+                  <Gift className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 mr-2 flex-shrink-0" />
+                  <span className="truncate">Community Birthdays</span>
                 </h1>
-                <p className="text-gray-600 mt-1">Celebrate with our Stone Creek family</p>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">Celebrate with our Stone Creek family</p>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Current Month Highlight */}
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 mb-8">
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
           <div className="flex items-center mb-4">
-            <Calendar className="h-6 w-6 text-purple-600 mr-2" />
-            <h2 className="text-xl font-semibold text-purple-900">This Month: {currentMonth}</h2>
+            <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 mr-2" />
+            <h2 className="text-lg sm:text-xl font-semibold text-purple-900">This Month: {currentMonth}</h2>
           </div>
           {birthdays.find(group => group.month === currentMonth) ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {birthdays
                 .find(group => group.month === currentMonth)
                 ?.users.map((user) => (
-                  <div key={user.id} className="bg-white p-4 rounded-lg shadow-sm border border-purple-200">
+                  <div key={user.id} className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-purple-200">
                     <div className="flex items-center">
-                      <div className="bg-purple-100 p-2 rounded-full mr-3">
+                      <div className="bg-purple-100 p-2 rounded-full mr-3 flex-shrink-0">
                         <Gift className="h-4 w-4 text-purple-600" />
                       </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900">{user.fullName}</h3>
-                        <p className="text-purple-600 text-sm">{formatBirthday(user.birthday)}</p>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{user.fullName}</h3>
+                        <p className="text-purple-600 text-xs sm:text-sm">{formatBirthday(user.birthday)}</p>
                         {isUpcoming(user.birthday) && (
                           <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full mt-1">
                             Coming Soon!
@@ -185,92 +185,63 @@ export default function BirthdaysPage() {
                 ))}
             </div>
           ) : (
-            <p className="text-purple-700">No birthdays this month</p>
+            <p className="text-purple-700 text-sm sm:text-base">No birthdays this month</p>
           )}
         </div>
 
         {/* All Birthdays by Month */}
         <div className="bg-white rounded-lg shadow-sm">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+          <div className="p-4 sm:p-6 border-b border-gray-200">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center">
               <Users className="h-5 w-5 text-gray-600 mr-2" />
               All Birthdays by Month
             </h2>
           </div>
 
-          <div className="p-6">
-            {birthdays.length > 0 ? (
-              <div className="space-y-8">
-                {birthdays.map((group) => (
-                  <div key={group.month}>
-                    <h3 className={`text-lg font-medium mb-4 flex items-center ${
-                      isCurrentMonth(group.month) ? 'text-purple-700' : 'text-gray-900'
-                    }`}>
-                      <Calendar className={`h-5 w-5 mr-2 ${
-                        isCurrentMonth(group.month) ? 'text-purple-600' : 'text-gray-600'
-                      }`} />
-                      {group.month}
-                      {isCurrentMonth(group.month) && (
-                        <span className="ml-2 bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
-                          Current Month
-                        </span>
-                      )}
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {group.users.map((user) => (
-                        <div 
-                          key={user.id} 
-                          className={`p-4 rounded-lg border ${
-                            isCurrentMonth(group.month)
-                              ? 'bg-purple-50 border-purple-200'
-                              : 'bg-gray-50 border-gray-200'
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <div className={`p-2 rounded-full mr-3 ${
-                              isCurrentMonth(group.month)
-                                ? 'bg-purple-100'
-                                : 'bg-gray-100'
-                            }`}>
-                              <Gift className={`h-4 w-4 ${
-                                isCurrentMonth(group.month)
-                                  ? 'text-purple-600'
-                                  : 'text-gray-600'
-                              }`} />
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-gray-900">{user.fullName}</h4>
-                              <p className={`text-sm ${
-                                isCurrentMonth(group.month)
-                                  ? 'text-purple-600'
-                                  : 'text-gray-600'
-                              }`}>
-                                {formatBirthday(user.birthday)}
-                              </p>
-                              {isUpcoming(user.birthday) && (
-                                <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mt-1">
-                                  Upcoming
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+          <div className="divide-y divide-gray-200">
+            {birthdays.map((group) => (
+              <div key={group.month} className="p-4 sm:p-6">
+                <h3 className={`text-lg font-medium mb-4 ${
+                  isCurrentMonth(group.month) ? 'text-purple-600' : 'text-gray-900'
+                }`}>
+                  {group.month}
+                  {isCurrentMonth(group.month) && (
+                    <span className="ml-2 bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                      Current Month
+                    </span>
+                  )}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                  {group.users.map((user) => (
+                    <div key={user.id} className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div className="bg-purple-100 p-2 rounded-full mr-3 flex-shrink-0">
+                        <Gift className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium text-gray-900 text-sm truncate">{user.fullName}</h4>
+                        <p className="text-gray-600 text-xs sm:text-sm">{formatBirthdayDate(new Date(user.birthday))}</p>
+                        {isUpcoming(user.birthday) && (
+                          <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mt-1">
+                            Upcoming
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <Gift className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-medium text-gray-900 mb-2">No birthdays available</h3>
-                <p className="text-gray-600">
-                  Birthday information will appear here as community members join.
-                </p>
-              </div>
-            )}
+            ))}
           </div>
+
+          {birthdays.length === 0 && (
+            <div className="p-8 sm:p-12 text-center">
+              <Gift className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Birthdays Found</h3>
+              <p className="text-gray-600 text-sm sm:text-base">
+                No community members have birthdays on record yet.
+              </p>
+            </div>
+          )}
         </div>
       </main>
     </div>

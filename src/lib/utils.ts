@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { startOfWeek, endOfWeek, addWeeks, format, isSameDay, addDays } from 'date-fns'
+import { toZonedTime, formatInTimeZone } from 'date-fns-tz'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -30,12 +31,8 @@ export function formatTime(time: string): string {
 }
 
 export function formatBirthdayDate(date: Date): string {
-  // Format in Central Time zone
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'America/Chicago'
-  })
+  // Always format in Central Time zone to ensure consistency
+  return formatInTimeZone(date, 'America/Chicago', 'MMM d')
 }
 
 export function getUpcomingBirthdays(users: Array<{ fullName: string; birthday: Date }>) {
@@ -43,18 +40,22 @@ export function getUpcomingBirthdays(users: Array<{ fullName: string; birthday: 
   const currentYear = now.getFullYear()
   const nextYear = currentYear + 1
   
+  // Get current date in Central Time
+  const nowInCT = toZonedTime(now, 'America/Chicago')
+  
   return users
     .map(user => {
-      // Format birthday in Central Time to get correct month/day
-      const birthdayInCT = new Date(user.birthday.toLocaleString('en-US', { timeZone: 'America/Chicago' }))
+      // Convert birthday to Central Time to get correct month/day
+      const birthdayInCT = toZonedTime(user.birthday, 'America/Chicago')
       const birthdayMonth = birthdayInCT.getMonth()
       const birthdayDay = birthdayInCT.getDate()
       
+      // Create birthday dates for this year and next year in Central Time
       const birthdayThisYear = new Date(currentYear, birthdayMonth, birthdayDay)
       const birthdayNextYear = new Date(nextYear, birthdayMonth, birthdayDay)
       
       // Use this year's birthday if it hasn't passed, otherwise use next year's
-      const upcomingBirthday = birthdayThisYear >= now ? birthdayThisYear : birthdayNextYear
+      const upcomingBirthday = birthdayThisYear >= nowInCT ? birthdayThisYear : birthdayNextYear
       
       return {
         ...user,
@@ -63,7 +64,7 @@ export function getUpcomingBirthdays(users: Array<{ fullName: string; birthday: 
     })
     .filter(user => {
       // Show all upcoming birthdays for the next 12 months
-      const oneYearFromNow = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
+      const oneYearFromNow = new Date(nowInCT.getFullYear() + 1, nowInCT.getMonth(), nowInCT.getDate())
       return user.birthdayThisYear <= oneYearFromNow
     })
     .sort((a, b) => a.birthdayThisYear.getTime() - b.birthdayThisYear.getTime())
