@@ -699,12 +699,12 @@ export default function Home() {
                     </div>
                   ))}
                   <div className="mt-4">
-                    <a
+                    <Link
                       href="/prayer-requests"
                       className="text-purple-600 hover:text-purple-800 text-sm font-medium"
                     >
                       View All Prayer Requests →
-                    </a>
+                    </Link>
                   </div>
                 </div>
               ) : (
@@ -733,12 +733,12 @@ export default function Home() {
                   ))}
                   {data.prayerSubjects.length > 3 && (
                     <div className="mt-3">
-                      <a
+                      <Link
                         href="/prayer-subjects"
                         className="text-red-600 hover:text-red-800 text-sm font-medium"
                       >
                         View All Prayer Subjects →
-                      </a>
+                      </Link>
                     </div>
                   )}
                 </div>
@@ -774,12 +774,12 @@ export default function Home() {
                   ))}
                   {data.news.length > 3 && (
                     <div className="mt-4">
-                      <a
+                      <Link
                         href="/news"
                         className="text-green-600 hover:text-green-800 text-sm font-medium"
                       >
                         View All News & Events →
-                      </a>
+                      </Link>
                     </div>
                   )}
                 </div>
