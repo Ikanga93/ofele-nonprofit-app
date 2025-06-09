@@ -39,9 +39,12 @@ export default function BirthdaysPage() {
         data.users.forEach((user: User) => {
           if (user.birthday) {
             const birthDate = new Date(user.birthday)
-            // Use Central Time for month grouping
-            const birthdayInCT = toZonedTime(birthDate, 'America/Chicago')
-            const monthName = birthdayInCT.toLocaleDateString('en-US', { 
+            // Parse the date correctly to avoid timezone issues
+            const dateStr = birthDate.toISOString()
+            const parts = dateStr.split('T')[0].split('-')
+            const month = parseInt(parts[1]) - 1 // JavaScript months are 0-indexed
+            const localDate = new Date(2000, month, 1) // Use dummy year and day
+            const monthName = localDate.toLocaleDateString('en-US', { 
               month: 'long'
             })
             
@@ -55,10 +58,12 @@ export default function BirthdaysPage() {
         // Sort users within each month by day
         Object.keys(monthGroups).forEach(month => {
           monthGroups[month].sort((a, b) => {
-            // Use Central Time for day comparison
-            const birthdayA = toZonedTime(new Date(a.birthday), 'America/Chicago')
-            const birthdayB = toZonedTime(new Date(b.birthday), 'America/Chicago')
-            return birthdayA.getDate() - birthdayB.getDate()
+            // Parse dates correctly to avoid timezone issues
+            const birthdayA = new Date(a.birthday)
+            const birthdayB = new Date(b.birthday)
+            const dayA = parseInt(birthdayA.toISOString().split('T')[0].split('-')[2])
+            const dayB = parseInt(birthdayB.toISOString().split('T')[0].split('-')[2])
+            return dayA - dayB
           })
         })
         
@@ -86,11 +91,8 @@ export default function BirthdaysPage() {
 
   const formatBirthday = (birthday: string) => {
     const date = new Date(birthday)
-    const birthdayInCT = toZonedTime(date, 'America/Chicago')
-    return birthdayInCT.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric'
-    })
+    // Use the same formatting function as everywhere else in the app
+    return formatBirthdayDate(date)
   }
 
   const isCurrentMonth = (month: string) => {
@@ -102,20 +104,22 @@ export default function BirthdaysPage() {
     const birthDate = new Date(birthday)
     const thisYear = today.getFullYear()
     
-    // Convert to Central Time for accurate comparison
-    const todayInCT = toZonedTime(today, 'America/Chicago')
-    const birthdayInCT = toZonedTime(birthDate, 'America/Chicago')
+    // Parse the birthday date correctly to avoid timezone issues
+    const dateStr = birthDate.toISOString()
+    const parts = dateStr.split('T')[0].split('-')
+    const birthdayMonth = parseInt(parts[1]) - 1 // JavaScript months are 0-indexed
+    const birthdayDay = parseInt(parts[2])
     
-    // Set the birthday to this year
-    const thisBirthday = new Date(thisYear, birthdayInCT.getMonth(), birthdayInCT.getDate())
+    // Set the birthday to this year using local time
+    const thisBirthday = new Date(thisYear, birthdayMonth, birthdayDay)
     
     // If birthday has passed this year, check next year
-    if (thisBirthday < todayInCT) {
+    if (thisBirthday < today) {
       thisBirthday.setFullYear(thisYear + 1)
     }
     
     // Check if birthday is within next 30 days
-    const diffTime = thisBirthday.getTime() - todayInCT.getTime()
+    const diffTime = thisBirthday.getTime() - today.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     
     return diffDays <= 30 && diffDays >= 0
@@ -219,7 +223,7 @@ export default function BirthdaysPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4 className="font-medium text-gray-900 text-sm truncate">{user.fullName}</h4>
-                        <p className="text-gray-600 text-xs sm:text-sm">{formatBirthdayDate(new Date(user.birthday))}</p>
+                        <p className="text-gray-600 text-xs sm:text-sm">{formatBirthday(user.birthday)}</p>
                         {isUpcoming(user.birthday) && (
                           <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mt-1">
                             Upcoming

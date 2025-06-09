@@ -502,18 +502,26 @@ export default function Home() {
                   ))}
                   {data.upcomingBirthdays.length > 5 && (
                     <div className="mt-3">
-                      <a
+                      <Link
                         href="/birthdays"
                         className="text-purple-600 hover:text-purple-800 text-sm font-medium"
                       >
                         View All Birthdays →
-                      </a>
+                      </Link>
                     </div>
                   )}
                 </div>
               ) : (
                 <p className="text-sm text-gray-500">No upcoming birthdays</p>
               )}
+              <div className="mt-4">
+                <Link
+                  href="/birthdays"
+                  className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                >
+                  View All Birthdays →
+                </Link>
+              </div>
             </div>
 
             {/* Quick Links */}

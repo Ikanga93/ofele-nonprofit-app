@@ -31,8 +31,21 @@ export function formatTime(time: string): string {
 }
 
 export function formatBirthdayDate(date: Date): string {
-  // Always format in Central Time zone to ensure consistency
-  return formatInTimeZone(date, 'America/Chicago', 'MMM d')
+  // For birthdays stored as UTC dates, we need to extract the original date parts
+  // to avoid timezone conversion issues
+  const dateStr = date.toISOString()
+  const parts = dateStr.split('T')[0].split('-')
+  const year = parseInt(parts[0])
+  const month = parseInt(parts[1]) - 1 // JavaScript months are 0-indexed
+  const day = parseInt(parts[2])
+  
+  // Create a new local date with the extracted parts
+  const localBirthday = new Date(year, month, day)
+  
+  return localBirthday.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+  })
 }
 
 export function getUpcomingBirthdays(users: Array<{ fullName: string; birthday: Date }>) {
@@ -40,22 +53,20 @@ export function getUpcomingBirthdays(users: Array<{ fullName: string; birthday: 
   const currentYear = now.getFullYear()
   const nextYear = currentYear + 1
   
-  // Get current date in Central Time
-  const nowInCT = toZonedTime(now, 'America/Chicago')
-  
   return users
     .map(user => {
-      // Convert birthday to Central Time to get correct month/day
-      const birthdayInCT = toZonedTime(user.birthday, 'America/Chicago')
-      const birthdayMonth = birthdayInCT.getMonth()
-      const birthdayDay = birthdayInCT.getDate()
+      // Parse the birthday date correctly to avoid timezone issues
+      const dateStr = user.birthday.toISOString()
+      const parts = dateStr.split('T')[0].split('-')
+      const birthdayMonth = parseInt(parts[1]) - 1 // JavaScript months are 0-indexed
+      const birthdayDay = parseInt(parts[2])
       
-      // Create birthday dates for this year and next year in Central Time
+      // Create birthday dates for this year and next year using local time
       const birthdayThisYear = new Date(currentYear, birthdayMonth, birthdayDay)
       const birthdayNextYear = new Date(nextYear, birthdayMonth, birthdayDay)
       
       // Use this year's birthday if it hasn't passed, otherwise use next year's
-      const upcomingBirthday = birthdayThisYear >= nowInCT ? birthdayThisYear : birthdayNextYear
+      const upcomingBirthday = birthdayThisYear >= now ? birthdayThisYear : birthdayNextYear
       
       return {
         ...user,
@@ -64,7 +75,7 @@ export function getUpcomingBirthdays(users: Array<{ fullName: string; birthday: 
     })
     .filter(user => {
       // Show all upcoming birthdays for the next 12 months
-      const oneYearFromNow = new Date(nowInCT.getFullYear() + 1, nowInCT.getMonth(), nowInCT.getDate())
+      const oneYearFromNow = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
       return user.birthdayThisYear <= oneYearFromNow
     })
     .sort((a, b) => a.birthdayThisYear.getTime() - b.birthdayThisYear.getTime())
