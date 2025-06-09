@@ -4,12 +4,11 @@ import { verifyToken } from '@/lib/auth'
 
 export async function GET() {
   try {
-    const subjects = await prisma.prayerSubject.findMany({
-      where: { isActive: true },
+    const prayerSubjects = await prisma.prayerSubject.findMany({
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json({ subjects })
+    return NextResponse.json({ prayerSubjects })
   } catch (error) {
     console.error('Error fetching prayer subjects:', error)
     return NextResponse.json(

@@ -81,6 +81,9 @@ export default function AdminPanel() {
 
   useEffect(() => {
     checkAdminAuth()
+  }, [])
+
+  useEffect(() => {
     if (activeTab === 'schedules' || activeTab === 'users') {
       fetchSchedules()
       fetchAllUsers()
@@ -171,7 +174,7 @@ export default function AdminPanel() {
       if (response.ok) {
         setMessage('Schedule updated successfully!')
         setEditingSchedule(null)
-        fetchSchedules()
+        await fetchSchedules()
       } else {
         setError(data.error || 'Failed to update schedule')
       }
@@ -198,7 +201,7 @@ export default function AdminPanel() {
 
       if (response.ok) {
         setMessage('Schedule deleted successfully!')
-        fetchSchedules()
+        await fetchSchedules()
       } else {
         setError(data.error || 'Failed to delete schedule')
       }
@@ -233,7 +236,7 @@ export default function AdminPanel() {
           startTime: '18:00',
           endTime: '19:00'
         })
-        fetchSchedules()
+        await fetchSchedules()
       } else {
         setError(data.error || 'Failed to create schedule')
       }
