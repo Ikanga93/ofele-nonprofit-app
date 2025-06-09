@@ -159,7 +159,7 @@ export default function PrayerRequests() {
                   required
                   value={formData.title}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-gray-900"
                   placeholder="Brief title for your prayer request"
                 />
               </div>
@@ -175,7 +175,7 @@ export default function PrayerRequests() {
                   rows={4}
                   value={formData.content}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-gray-900"
                   placeholder="Please share your prayer request..."
                 />
               </div>

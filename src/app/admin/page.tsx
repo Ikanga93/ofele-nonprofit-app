@@ -828,7 +828,7 @@ export default function AdminPanel() {
                     required
                     value={prayerSubjectForm.title}
                     onChange={(e) => setPrayerSubjectForm({...prayerSubjectForm, title: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-gray-900"
                     placeholder="Prayer subject title"
                   />
                 </div>
@@ -838,7 +838,7 @@ export default function AdminPanel() {
                     rows={3}
                     value={prayerSubjectForm.description}
                     onChange={(e) => setPrayerSubjectForm({...prayerSubjectForm, description: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-gray-900"
                     placeholder="Additional details about this prayer subject"
                   />
                 </div>
@@ -877,7 +877,7 @@ export default function AdminPanel() {
                     required
                     value={newsForm.title}
                     onChange={(e) => setNewsForm({...newsForm, title: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                     placeholder={newsForm.isEvent ? "Event title" : "News title"}
                   />
                 </div>
@@ -888,7 +888,7 @@ export default function AdminPanel() {
                     required
                     value={newsForm.content}
                     onChange={(e) => setNewsForm({...newsForm, content: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                     placeholder={newsForm.isEvent ? "Event description and details" : "News content"}
                   />
                 </div>
@@ -899,7 +899,7 @@ export default function AdminPanel() {
                       type="date"
                       value={newsForm.eventDate}
                       onChange={(e) => setNewsForm({...newsForm, eventDate: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                     />
                   </div>
                 )}

@@ -249,7 +249,7 @@ export default function Home() {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-sm sm:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-sm sm:text-base"
                     placeholder="Your name (leave blank to submit anonymously)"
                     disabled={formData.isAnonymous}
                   />
@@ -266,7 +266,7 @@ export default function Home() {
                     required
                     value={formData.title}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-sm sm:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-sm sm:text-base"
                     placeholder="Brief title for your prayer request"
                   />
                 </div>
@@ -282,7 +282,7 @@ export default function Home() {
                     rows={4}
                     value={formData.content}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-sm sm:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-sm sm:text-base"
                     placeholder="Please share your prayer request..."
                   />
                 </div>
@@ -526,15 +526,15 @@ export default function Home() {
                 >
                   <Users className="h-4 w-4 mr-2" />
                   Prayer Teams
-                </a>
-                <a
+        </a>
+        <a
                   href="/prayer-subjects"
                   className="flex items-center text-sm text-blue-600 hover:text-blue-800"
                 >
                   <Heart className="h-4 w-4 mr-2" />
                   Prayer Subjects
-                </a>
-                <a
+        </a>
+        <a
                   href="/news"
                   className="flex items-center text-sm text-blue-600 hover:text-blue-800"
                 >
@@ -596,7 +596,7 @@ export default function Home() {
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-sm sm:text-base"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-sm sm:text-base"
                       placeholder="Your name (leave blank to submit anonymously)"
                       disabled={formData.isAnonymous}
                     />
@@ -613,7 +613,7 @@ export default function Home() {
                       required
                       value={formData.title}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-sm sm:text-base"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-sm sm:text-base"
                       placeholder="Brief title for your prayer request"
                     />
                   </div>
@@ -629,7 +629,7 @@ export default function Home() {
                       rows={4}
                       value={formData.content}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-sm sm:text-base"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-sm sm:text-base"
                       placeholder="Please share your prayer request..."
                     />
                   </div>
