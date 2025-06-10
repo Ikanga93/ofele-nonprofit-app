@@ -768,13 +768,14 @@ export default function AdminPanel() {
       const response = await fetch('/api/prayer-teams', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+        body: JSON.stringify({ replaceExisting: true })
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        setMessage(`Successfully created ${data.count} prayer teams for this week!`)
+        const actionText = data.action === 'replaced' ? 'replaced' : 'created'
+        setMessage(`Successfully ${actionText} ${data.count} prayer teams for this week!`)
         await fetchOverviewData()
         await fetchPrayerTeams()
       } else {
@@ -1275,7 +1276,7 @@ export default function AdminPanel() {
                     className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center text-sm"
                   >
                     <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                    Quick Generate
+                    Generate Teams
                   </button>
                 </div>
               </div>
@@ -1354,15 +1355,15 @@ export default function AdminPanel() {
                 <h3 className="font-medium text-gray-900 mb-2 text-sm sm:text-base">Prayer Team Management Options</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2 text-xs sm:text-sm text-gray-600">
-                    <h4 className="font-medium text-gray-900">Quick Generate</h4>
-                    <p>• Generates teams for current week only</p>
-                    <p>• Fails if teams already exist</p>
+                    <h4 className="font-medium text-gray-900">Generate Teams</h4>
+                    <p>• Automatically replaces existing teams</p>
+                    <p>• Generates for current week</p>
                     <p>• Fast and simple</p>
                   </div>
                   <div className="space-y-2 text-xs sm:text-sm text-gray-600">
                     <h4 className="font-medium text-gray-900">Advanced Generate</h4>
                     <p>• Choose specific week dates</p>
-                    <p>• Option to replace existing teams</p>
+                    <p>• Control replace behavior</p>
                     <p>• Generate for future weeks</p>
                   </div>
                   <div className="space-y-2 text-xs sm:text-sm text-gray-600">
@@ -1450,10 +1451,10 @@ export default function AdminPanel() {
                   <button
                     onClick={generatePrayerTeams}
                     disabled={submitting}
-                    className="flex items-center justify-center p-3 sm:p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm sm:text-base"
+                    className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center text-sm"
                   >
-                    <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    Generate Prayer Teams
+                    <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                    Generate Teams
                   </button>
                   <button
                     onClick={generateModeratorSchedule}
