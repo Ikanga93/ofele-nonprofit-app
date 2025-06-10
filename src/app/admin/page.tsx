@@ -248,7 +248,17 @@ export default function AdminPanel() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    // For dates stored as UTC strings, we need to extract the original date parts
+    // to avoid timezone conversion issues
+    const parts = dateString.split('T')[0].split('-')
+    const year = parseInt(parts[0])
+    const month = parseInt(parts[1]) - 1 // JavaScript months are 0-indexed
+    const day = parseInt(parts[2])
+    
+    // Create a new local date with the extracted parts
+    const localDate = new Date(year, month, day)
+    
+    return localDate.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
