@@ -16,7 +16,8 @@ import {
   Edit,
   Trash2,
   Save,
-  X
+  X,
+  Heart
 } from 'lucide-react'
 
 interface User {
@@ -1146,8 +1147,9 @@ export default function AdminPanel() {
             {[
               { id: 'overview', name: 'Overview', icon: Settings },
               { id: 'users', name: 'Users', icon: Users },
+              { id: 'prayer-teams', name: 'Prayer Teams', icon: HandHeart },
               { id: 'schedules', name: 'Schedules', icon: Calendar },
-              { id: 'prayer-subjects', name: 'Prayer Subjects', icon: HandHeart },
+              { id: 'prayer-subjects', name: 'Prayer Subjects', icon: Heart },
               { id: 'news', name: 'News & Events', icon: Newspaper }
             ].map((tab) => {
               const Icon = tab.icon
@@ -1205,7 +1207,7 @@ export default function AdminPanel() {
                   className="bg-purple-50 p-3 sm:p-6 rounded-lg hover:bg-purple-100 transition-colors text-left"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center">
-                    <HandHeart className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 mb-2 sm:mb-0" />
+                    <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 mb-2 sm:mb-0" />
                     <div className="sm:ml-4">
                       <p className="text-xs sm:text-sm font-medium text-purple-600">Active Prayer Subjects</p>
                       <p className="text-lg sm:text-2xl font-bold text-purple-900">{overviewData.activePrayerSubjects}</p>
@@ -1229,12 +1231,11 @@ export default function AdminPanel() {
                 <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <button
-                    onClick={generatePrayerTeams}
-                    disabled={submitting}
+                    onClick={() => setActiveTab('prayer-teams')}
                     className="flex items-center justify-center p-3 sm:p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm sm:text-base"
                   >
-                    <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    Generate Prayer Teams
+                    <HandHeart className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                    Manage Prayer Teams
                   </button>
                   <button
                     onClick={generateModeratorSchedule}
@@ -1278,6 +1279,37 @@ export default function AdminPanel() {
                     <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                     Generate Teams
                   </button>
+                </div>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="flex items-center">
+                    <Users className="h-5 w-5 text-blue-600 mr-2" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">Total Teams</p>
+                      <p className="text-lg font-bold text-blue-700">{prayerTeams.length}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div className="flex items-center">
+                    <Calendar className="h-5 w-5 text-green-600 mr-2" />
+                    <div>
+                      <p className="text-sm font-medium text-green-900">Current Week</p>
+                      <p className="text-lg font-bold text-green-700">{overviewData.currentWeekTeams}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <div className="flex items-center">
+                    <Heart className="h-5 w-5 text-purple-600 mr-2" />
+                    <div>
+                      <p className="text-sm font-medium text-purple-900">Total Users</p>
+                      <p className="text-lg font-bold text-purple-700">{overviewData.totalUsers}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1326,7 +1358,7 @@ export default function AdminPanel() {
                         disabled={submitting}
                         className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center justify-center text-sm"
                       >
-                        <Users className="h-4 w-4 mr-2" />
+                        <Heart className="h-4 w-4 mr-2" />
                         {submitting ? 'Generating...' : 'Generate Teams'}
                       </button>
                       <button
@@ -1351,26 +1383,45 @@ export default function AdminPanel() {
               {/* Prayer Team Management Section */}
               <PrayerTeamManagement />
               
+              {/* Help Section */}
               <div className="bg-gray-50 p-4 sm:p-6 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2 text-sm sm:text-base">Prayer Team Management Options</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <h3 className="font-medium text-gray-900 mb-4 text-sm sm:text-base">Prayer Team Management Guide</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2 text-xs sm:text-sm text-gray-600">
-                    <h4 className="font-medium text-gray-900">Generate Teams</h4>
+                    <h4 className="font-medium text-gray-900 flex items-center">
+                      <Plus className="h-4 mr-1 text-blue-600" />
+                      Generate Teams
+                    </h4>
                     <p>• Automatically replaces existing teams</p>
                     <p>• Generates for current week</p>
-                    <p>• Fast and simple</p>
+                    <p>• Random pairing of all users</p>
                   </div>
                   <div className="space-y-2 text-xs sm:text-sm text-gray-600">
-                    <h4 className="font-medium text-gray-900">Advanced Generate</h4>
+                    <h4 className="font-medium text-gray-900 flex items-center">
+                      <Settings className="h-4 mr-1 text-green-600" />
+                      Advanced Generate
+                    </h4>
                     <p>• Choose specific week dates</p>
                     <p>• Control replace behavior</p>
                     <p>• Generate for future weeks</p>
                   </div>
                   <div className="space-y-2 text-xs sm:text-sm text-gray-600">
-                    <h4 className="font-medium text-gray-900">Manual Management</h4>
+                    <h4 className="font-medium text-gray-900 flex items-center">
+                      <Edit className="h-4 mr-1 text-purple-600" />
+                      Manual Management
+                    </h4>
                     <p>• Create custom teams individually</p>
                     <p>• Edit existing team assignments</p>
                     <p>• Delete specific teams</p>
+                  </div>
+                  <div className="space-y-2 text-xs sm:text-sm text-gray-600">
+                    <h4 className="font-medium text-gray-900 flex items-center">
+                      <Trash2 className="h-4 mr-1 text-red-600" />
+                      Clear Teams
+                    </h4>
+                    <p>• Remove all teams for current week</p>
+                    <p>• Confirmation required</p>
+                    <p>• Useful before regenerating</p>
                   </div>
                 </div>
               </div>
@@ -1449,12 +1500,11 @@ export default function AdminPanel() {
                 <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <button
-                    onClick={generatePrayerTeams}
-                    disabled={submitting}
-                    className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center text-sm"
+                    onClick={() => setActiveTab('prayer-teams')}
+                    className="flex items-center justify-center p-3 sm:p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm sm:text-base"
                   >
-                    <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                    Generate Teams
+                    <HandHeart className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                    Manage Prayer Teams
                   </button>
                   <button
                     onClick={generateModeratorSchedule}
