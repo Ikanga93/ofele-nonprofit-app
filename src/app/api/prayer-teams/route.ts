@@ -57,24 +57,47 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    // Generate prayer teams for the current week
-    const currentWeek = getWeekRange(new Date())
+    const { replaceExisting = false, weekStart, weekEnd } = await request.json()
+
+    // Determine the week to generate teams for
+    let targetWeek
+    if (weekStart && weekEnd) {
+      targetWeek = {
+        start: new Date(weekStart),
+        end: new Date(weekEnd)
+      }
+    } else {
+      // Default to current week
+      targetWeek = getWeekRange(new Date())
+    }
     
     // Check if teams already exist for this week
     const existingTeams = await prisma.prayerTeam.findMany({
       where: {
         weekStart: {
-          gte: currentWeek.start,
-          lte: currentWeek.end
+          gte: targetWeek.start,
+          lte: targetWeek.end
         }
       }
     })
 
-    if (existingTeams.length > 0) {
+    if (existingTeams.length > 0 && !replaceExisting) {
       return NextResponse.json(
-        { error: 'Prayer teams already exist for this week' },
+        { error: 'Prayer teams already exist for this week. Use replaceExisting: true to replace them.' },
         { status: 400 }
       )
+    }
+
+    // If replacing existing teams, delete them first
+    if (existingTeams.length > 0 && replaceExisting) {
+      await prisma.prayerTeam.deleteMany({
+        where: {
+          weekStart: {
+            gte: targetWeek.start,
+            lte: targetWeek.end
+          }
+        }
+      })
     }
 
     // Get all users
@@ -97,8 +120,8 @@ export async function POST(request: NextRequest) {
       teams.push({
         member1Id: shuffledUsers[i].id,
         member2Id: shuffledUsers[i + 1].id,
-        weekStart: currentWeek.start,
-        weekEnd: currentWeek.end
+        weekStart: targetWeek.start,
+        weekEnd: targetWeek.end
       })
     }
 
@@ -107,8 +130,8 @@ export async function POST(request: NextRequest) {
       teams.push({
         member1Id: shuffledUsers[shuffledUsers.length - 1].id,
         member2Id: shuffledUsers[0].id,
-        weekStart: currentWeek.start,
-        weekEnd: currentWeek.end
+        weekStart: targetWeek.start,
+        weekEnd: targetWeek.end
       })
     }
 
@@ -117,9 +140,13 @@ export async function POST(request: NextRequest) {
       data: teams
     })
 
+    const action = replaceExisting && existingTeams.length > 0 ? 'replaced' : 'created'
     return NextResponse.json({ 
-      message: `Created ${createdTeams.count} prayer teams`,
-      count: createdTeams.count
+      message: `${action === 'replaced' ? 'Replaced' : 'Created'} ${createdTeams.count} prayer teams`,
+      count: createdTeams.count,
+      action,
+      weekStart: targetWeek.start,
+      weekEnd: targetWeek.end
     })
   } catch (error) {
     console.error('Error creating prayer teams:', error)

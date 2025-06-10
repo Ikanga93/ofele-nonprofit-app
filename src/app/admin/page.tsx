@@ -119,6 +119,14 @@ export default function AdminPanel() {
     weekEnd: ''
   })
 
+  // Prayer team generation states
+  const [showGenerateForm, setShowGenerateForm] = useState(false)
+  const [generateForm, setGenerateForm] = useState({
+    weekStart: '',
+    weekEnd: '',
+    replaceExisting: false
+  })
+
   useEffect(() => {
     checkAdminAuth()
   }, [])
@@ -778,6 +786,83 @@ export default function AdminPanel() {
     }
   }
 
+  const generateCustomPrayerTeams = async () => {
+    setSubmitting(true)
+    setMessage('')
+    setError('')
+
+    try {
+      const requestBody: any = {
+        replaceExisting: generateForm.replaceExisting
+      }
+
+      if (generateForm.weekStart && generateForm.weekEnd) {
+        requestBody.weekStart = generateForm.weekStart
+        requestBody.weekEnd = generateForm.weekEnd
+      }
+
+      const response = await fetch('/api/prayer-teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        const weekText = generateForm.weekStart && generateForm.weekEnd 
+          ? `for ${formatWeekRange(generateForm.weekStart, generateForm.weekEnd)}`
+          : 'for this week'
+        setMessage(`Successfully ${data.action} ${data.count} prayer teams ${weekText}!`)
+        setShowGenerateForm(false)
+        setGenerateForm({
+          weekStart: '',
+          weekEnd: '',
+          replaceExisting: false
+        })
+        await fetchOverviewData()
+        await fetchPrayerTeams()
+      } else {
+        setError(data.error || 'Failed to generate prayer teams')
+      }
+    } catch (error) {
+      setError('An error occurred while generating prayer teams')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const clearPrayerTeams = async () => {
+    const weekText = 'for this week'
+    
+    if (!confirm(`Are you sure you want to clear all prayer teams ${weekText}?`)) return
+
+    setSubmitting(true)
+    setMessage('')
+    setError('')
+
+    try {
+      const response = await fetch('/api/prayer-teams/clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setMessage(`Successfully cleared ${data.count} prayer teams ${weekText}!`)
+        await fetchOverviewData()
+        await fetchPrayerTeams()
+      } else {
+        setError(data.error || 'Failed to clear prayer teams')
+      }
+    } catch (error) {
+      setError('An error occurred while clearing prayer teams')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const generateModeratorSchedule = async () => {
     setSubmitting(true)
     setMessage('')
@@ -1166,39 +1251,123 @@ export default function AdminPanel() {
             <div className="space-y-4 sm:space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Prayer Teams Management</h2>
-                <button
-                  onClick={generatePrayerTeams}
-                  disabled={submitting}
-                  className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center text-sm"
-                >
-                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                  Generate Weekly Teams
-                </button>
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                  <button
+                    onClick={() => clearPrayerTeams()}
+                    disabled={submitting}
+                    className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center justify-center text-sm"
+                  >
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                    Clear This Week
+                  </button>
+                  <button
+                    onClick={() => setShowGenerateForm(!showGenerateForm)}
+                    className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center text-sm"
+                  >
+                    <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                    Advanced Generate
+                  </button>
+                  <button
+                    onClick={generatePrayerTeams}
+                    disabled={submitting}
+                    className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center text-sm"
+                  >
+                    <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                    Quick Generate
+                  </button>
+                </div>
               </div>
+
+              {/* Advanced Generate Form */}
+              {showGenerateForm && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 sm:p-6">
+                  <h3 className="font-medium text-green-900 mb-4 text-sm sm:text-base">Advanced Prayer Team Generation</h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-green-700 mb-1">Week Start (Optional)</label>
+                        <input
+                          type="date"
+                          value={generateForm.weekStart}
+                          onChange={(e) => setGenerateForm({...generateForm, weekStart: e.target.value})}
+                          className="w-full px-3 py-2 border border-green-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-sm"
+                        />
+                        <p className="text-xs text-green-600 mt-1">Leave empty for current week</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-green-700 mb-1">Week End (Optional)</label>
+                        <input
+                          type="date"
+                          value={generateForm.weekEnd}
+                          onChange={(e) => setGenerateForm({...generateForm, weekEnd: e.target.value})}
+                          className="w-full px-3 py-2 border border-green-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-sm"
+                        />
+                        <p className="text-xs text-green-600 mt-1">Leave empty for current week</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="replaceExisting"
+                        checked={generateForm.replaceExisting}
+                        onChange={(e) => setGenerateForm({...generateForm, replaceExisting: e.target.checked})}
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-green-300 rounded"
+                      />
+                      <label htmlFor="replaceExisting" className="ml-2 text-sm text-green-700">
+                        Replace existing teams for this week
+                      </label>
+                    </div>
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                      <button
+                        onClick={generateCustomPrayerTeams}
+                        disabled={submitting}
+                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center justify-center text-sm"
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        {submitting ? 'Generating...' : 'Generate Teams'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowGenerateForm(false)
+                          setGenerateForm({
+                            weekStart: '',
+                            weekEnd: '',
+                            replaceExisting: false
+                          })
+                        }}
+                        className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 flex items-center justify-center text-sm"
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* Prayer Team Management Section */}
               <PrayerTeamManagement />
               
               <div className="bg-gray-50 p-4 sm:p-6 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2 text-sm sm:text-base">About Prayer Teams</h3>
-                <p className="text-gray-600 text-xs sm:text-sm mb-4">
-                  Prayer teams pair community members to pray for each other during the week. 
-                  You can generate teams automatically or create custom teams manually.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="font-medium text-gray-900 mb-2 text-sm sm:text-base">Prayer Team Management Options</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2 text-xs sm:text-sm text-gray-600">
-                    <h4 className="font-medium text-gray-900">Automatic Generation</h4>
-                    <p>• Teams change every week</p>
-                    <p>• Random pairing ensures variety</p>
-                    <p>• All members (including admins) are included</p>
-                    <p>• If odd number of users, one team will have 3 members</p>
+                    <h4 className="font-medium text-gray-900">Quick Generate</h4>
+                    <p>• Generates teams for current week only</p>
+                    <p>• Fails if teams already exist</p>
+                    <p>• Fast and simple</p>
+                  </div>
+                  <div className="space-y-2 text-xs sm:text-sm text-gray-600">
+                    <h4 className="font-medium text-gray-900">Advanced Generate</h4>
+                    <p>• Choose specific week dates</p>
+                    <p>• Option to replace existing teams</p>
+                    <p>• Generate for future weeks</p>
                   </div>
                   <div className="space-y-2 text-xs sm:text-sm text-gray-600">
                     <h4 className="font-medium text-gray-900">Manual Management</h4>
-                    <p>• Create custom teams for specific weeks</p>
+                    <p>• Create custom teams individually</p>
                     <p>• Edit existing team assignments</p>
-                    <p>• Delete teams if needed</p>
-                    <p>• Full control over prayer partnerships</p>
+                    <p>• Delete specific teams</p>
                   </div>
                 </div>
               </div>
