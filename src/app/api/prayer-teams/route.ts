@@ -3,17 +3,26 @@ import { prisma } from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
 import { getWeekRange, shuffleArray } from '@/lib/utils'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const currentWeek = getWeekRange(new Date())
+    const { searchParams } = new URL(request.url)
+    const all = searchParams.get('all') === 'true'
     
-    const currentTeams = await prisma.prayerTeam.findMany({
-      where: {
+    let whereClause = {}
+    
+    if (!all) {
+      // Default behavior: only current week teams
+      const currentWeek = getWeekRange(new Date())
+      whereClause = {
         weekStart: {
           gte: currentWeek.start,
           lte: currentWeek.end
         }
-      },
+      }
+    }
+    
+    const teams = await prisma.prayerTeam.findMany({
+      where: whereClause,
       include: {
         member1: {
           select: { id: true, fullName: true, email: true }
@@ -21,10 +30,11 @@ export async function GET() {
         member2: {
           select: { id: true, fullName: true, email: true }
         }
-      }
+      },
+      orderBy: { weekStart: 'desc' }
     })
 
-    return NextResponse.json({ teams: currentTeams })
+    return NextResponse.json({ teams })
   } catch (error) {
     console.error('Error fetching prayer teams:', error)
     return NextResponse.json(

@@ -46,6 +46,20 @@ interface AllUsers {
   createdAt: string
 }
 
+interface PrayerTeam {
+  id: string
+  weekStart: string
+  weekEnd: string
+  member1: {
+    id: string
+    fullName: string
+  }
+  member2: {
+    id: string
+    fullName: string
+  }
+}
+
 export default function AdminPanel() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -88,6 +102,23 @@ export default function AdminPanel() {
     endTime: '19:00'
   })
 
+  // Prayer teams management states
+  const [prayerTeams, setPrayerTeams] = useState<PrayerTeam[]>([])
+  const [editingTeam, setEditingTeam] = useState<string | null>(null)
+  const [teamEditForm, setTeamEditForm] = useState({
+    member1Id: '',
+    member2Id: '',
+    weekStart: '',
+    weekEnd: ''
+  })
+  const [showNewTeamForm, setShowNewTeamForm] = useState(false)
+  const [newTeamForm, setNewTeamForm] = useState({
+    member1Id: '',
+    member2Id: '',
+    weekStart: '',
+    weekEnd: ''
+  })
+
   useEffect(() => {
     checkAdminAuth()
   }, [])
@@ -98,6 +129,10 @@ export default function AdminPanel() {
     }
     if (activeTab === 'schedules' || activeTab === 'users') {
       fetchSchedules()
+      fetchAllUsers()
+    }
+    if (activeTab === 'prayer-teams') {
+      fetchPrayerTeams()
       fetchAllUsers()
     }
   }, [activeTab])
@@ -144,6 +179,18 @@ export default function AdminPanel() {
       }
     } catch (error) {
       console.error('Error fetching users:', error)
+    }
+  }
+
+  const fetchPrayerTeams = async () => {
+    try {
+      const response = await fetch('/api/prayer-teams?all=true')
+      if (response.ok) {
+        const data = await response.json()
+        setPrayerTeams(data.teams)
+      }
+    } catch (error) {
+      console.error('Error fetching prayer teams:', error)
     }
   }
 
@@ -318,6 +365,20 @@ export default function AdminPanel() {
     const ampm = hour >= 12 ? 'PM' : 'AM'
     const displayHour = hour % 12 || 12
     return `${displayHour}:${minutes} ${ampm}`
+  }
+
+  const formatWeekRange = (startDate: string, endDate: string) => {
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    
+    return `${start.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    })} - ${end.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    })}`
   }
 
   const ScheduleManagement = () => (
@@ -512,6 +573,184 @@ export default function AdminPanel() {
     </div>
   )
 
+  const PrayerTeamManagement = () => (
+    <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900">Current Prayer Teams</h3>
+        <button
+          onClick={() => setShowNewTeamForm(!showNewTeamForm)}
+          className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center text-sm justify-center"
+        >
+          <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+          Add Team
+        </button>
+      </div>
+
+      {/* New Team Form */}
+      {showNewTeamForm && (
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 border border-gray-200 rounded-lg bg-gray-50">
+          <h4 className="font-medium text-gray-900 mb-3 text-sm sm:text-base">Create New Prayer Team</h4>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <select
+                value={newTeamForm.member1Id}
+                onChange={(e) => setNewTeamForm({...newTeamForm, member1Id: e.target.value})}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+              >
+                <option value="">Select Member 1</option>
+                {allUsers.map(user => (
+                  <option key={user.id} value={user.id}>{user.fullName}</option>
+                ))}
+              </select>
+              <select
+                value={newTeamForm.member2Id}
+                onChange={(e) => setNewTeamForm({...newTeamForm, member2Id: e.target.value})}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+              >
+                <option value="">Select Member 2</option>
+                {allUsers.filter(user => user.id !== newTeamForm.member1Id).map(user => (
+                  <option key={user.id} value={user.id}>{user.fullName}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                value={newTeamForm.weekStart}
+                onChange={(e) => setNewTeamForm({...newTeamForm, weekStart: e.target.value})}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                placeholder="Week Start"
+              />
+              <input
+                type="date"
+                value={newTeamForm.weekEnd}
+                onChange={(e) => setNewTeamForm({...newTeamForm, weekEnd: e.target.value})}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                placeholder="Week End"
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+              <button
+                onClick={createNewTeam}
+                disabled={submitting || !newTeamForm.member1Id || !newTeamForm.member2Id || !newTeamForm.weekStart || !newTeamForm.weekEnd}
+                className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center text-sm justify-center"
+              >
+                <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                Create Team
+              </button>
+              <button
+                onClick={() => {
+                  setShowNewTeamForm(false)
+                  setNewTeamForm({
+                    member1Id: '',
+                    member2Id: '',
+                    weekStart: '',
+                    weekEnd: ''
+                  })
+                }}
+                className="bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-gray-700 flex items-center text-sm justify-center"
+              >
+                <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {prayerTeams.length > 0 ? (
+        <div className="space-y-3">
+          {prayerTeams.map((team) => (
+            <div key={team.id} className="p-3 sm:p-4 border rounded-lg bg-blue-50 border-blue-200">
+              {editingTeam === team.id ? (
+                // Edit mode
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <select
+                      value={teamEditForm.member1Id}
+                      onChange={(e) => setTeamEditForm({...teamEditForm, member1Id: e.target.value})}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    >
+                      <option value="">Select Member 1</option>
+                      {allUsers.map(user => (
+                        <option key={user.id} value={user.id}>{user.fullName}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={teamEditForm.member2Id}
+                      onChange={(e) => setTeamEditForm({...teamEditForm, member2Id: e.target.value})}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    >
+                      <option value="">Select Member 2</option>
+                      {allUsers.filter(user => user.id !== teamEditForm.member1Id).map(user => (
+                        <option key={user.id} value={user.id}>{user.fullName}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="date"
+                      value={teamEditForm.weekStart}
+                      onChange={(e) => setTeamEditForm({...teamEditForm, weekStart: e.target.value})}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    />
+                    <input
+                      type="date"
+                      value={teamEditForm.weekEnd}
+                      onChange={(e) => setTeamEditForm({...teamEditForm, weekEnd: e.target.value})}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <button
+                      onClick={() => saveTeamEdit(team.id)}
+                      disabled={submitting}
+                      className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center text-sm justify-center"
+                    >
+                      <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                      Save
+                    </button>
+                    <button
+                      onClick={cancelTeamEditing}
+                      className="bg-gray-600 text-white px-3 py-1 rounded-md hover:bg-gray-700 flex items-center text-sm justify-center"
+                    >
+                      <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // View mode
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900 text-sm sm:text-base">
+                      {team.member1.fullName} & {team.member2.fullName}
+                    </h4>
+                    <p className="text-gray-600 text-xs sm:text-sm">{formatWeekRange(team.weekStart, team.weekEnd)}</p>
+                  </div>
+                  <div className="flex space-x-2 self-end sm:self-center">
+                    <button
+                      onClick={() => startEditingTeam(team)}
+                      className="text-blue-600 hover:text-blue-800 p-1"
+                      title="Edit team"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteTeam(team.id)}
+                      className="text-red-600 hover:text-red-800 p-1"
+                      title="Delete team"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-500 text-center py-4 text-sm">No prayer teams found. Create some teams to get started.</p>
+      )}
+    </div>
+  )
+
   const generatePrayerTeams = async () => {
     setSubmitting(true)
     setMessage('')
@@ -528,6 +767,7 @@ export default function AdminPanel() {
       if (response.ok) {
         setMessage(`Successfully created ${data.count} prayer teams for this week!`)
         await fetchOverviewData()
+        await fetchPrayerTeams()
       } else {
         setError(data.error || 'Failed to generate prayer teams')
       }
@@ -643,6 +883,119 @@ export default function AdminPanel() {
       }
     } catch (error) {
       setError('An error occurred while creating news/event')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // Prayer team management functions
+  const startEditingTeam = (team: PrayerTeam) => {
+    setEditingTeam(team.id)
+    setTeamEditForm({
+      member1Id: team.member1.id,
+      member2Id: team.member2.id,
+      weekStart: team.weekStart.split('T')[0],
+      weekEnd: team.weekEnd.split('T')[0]
+    })
+  }
+
+  const cancelTeamEditing = () => {
+    setEditingTeam(null)
+    setTeamEditForm({
+      member1Id: '',
+      member2Id: '',
+      weekStart: '',
+      weekEnd: ''
+    })
+  }
+
+  const saveTeamEdit = async (teamId: string) => {
+    setSubmitting(true)
+    setMessage('')
+    setError('')
+
+    try {
+      const response = await fetch(`/api/prayer-teams/${teamId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(teamEditForm)
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setMessage('Prayer team updated successfully!')
+        setEditingTeam(null)
+        await fetchPrayerTeams()
+        await fetchOverviewData()
+      } else {
+        setError(data.error || 'Failed to update prayer team')
+      }
+    } catch (error) {
+      setError('An error occurred while updating prayer team')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const deleteTeam = async (teamId: string) => {
+    if (!confirm('Are you sure you want to delete this prayer team?')) return
+
+    setSubmitting(true)
+    setMessage('')
+    setError('')
+
+    try {
+      const response = await fetch(`/api/prayer-teams/${teamId}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setMessage('Prayer team deleted successfully!')
+        await fetchPrayerTeams()
+        await fetchOverviewData()
+      } else {
+        setError(data.error || 'Failed to delete prayer team')
+      }
+    } catch (error) {
+      setError('An error occurred while deleting prayer team')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const createNewTeam = async () => {
+    setSubmitting(true)
+    setMessage('')
+    setError('')
+
+    try {
+      const response = await fetch('/api/prayer-teams/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTeamForm)
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setMessage('Prayer team created successfully!')
+        setShowNewTeamForm(false)
+        setNewTeamForm({
+          member1Id: '',
+          member2Id: '',
+          weekStart: '',
+          weekEnd: ''
+        })
+        await fetchPrayerTeams()
+        await fetchOverviewData()
+      } else {
+        setError(data.error || 'Failed to create prayer team')
+      }
+    } catch (error) {
+      setError('An error occurred while creating prayer team')
     } finally {
       setSubmitting(false)
     }
@@ -819,20 +1172,34 @@ export default function AdminPanel() {
                   className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center text-sm"
                 >
                   <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                  Generate Teams
+                  Generate Weekly Teams
                 </button>
               </div>
+              
+              {/* Prayer Team Management Section */}
+              <PrayerTeamManagement />
+              
               <div className="bg-gray-50 p-4 sm:p-6 rounded-lg">
                 <h3 className="font-medium text-gray-900 mb-2 text-sm sm:text-base">About Prayer Teams</h3>
                 <p className="text-gray-600 text-xs sm:text-sm mb-4">
-                  Prayer teams are automatically generated weekly, pairing community members to pray for each other. 
-                  Each week, new random pairs are created to ensure everyone gets to pray with different people.
+                  Prayer teams pair community members to pray for each other during the week. 
+                  You can generate teams automatically or create custom teams manually.
                 </p>
-                <div className="space-y-2 text-xs sm:text-sm text-gray-600">
-                  <p>• Teams change every week</p>
-                  <p>• All members (including admins) are included</p>
-                  <p>• Random pairing ensures variety</p>
-                  <p>• If odd number of users, one team will have 3 members</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2 text-xs sm:text-sm text-gray-600">
+                    <h4 className="font-medium text-gray-900">Automatic Generation</h4>
+                    <p>• Teams change every week</p>
+                    <p>• Random pairing ensures variety</p>
+                    <p>• All members (including admins) are included</p>
+                    <p>• If odd number of users, one team will have 3 members</p>
+                  </div>
+                  <div className="space-y-2 text-xs sm:text-sm text-gray-600">
+                    <h4 className="font-medium text-gray-900">Manual Management</h4>
+                    <p>• Create custom teams for specific weeks</p>
+                    <p>• Edit existing team assignments</p>
+                    <p>• Delete teams if needed</p>
+                    <p>• Full control over prayer partnerships</p>
+                  </div>
                 </div>
               </div>
             </div>
