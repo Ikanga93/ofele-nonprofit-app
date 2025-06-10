@@ -57,7 +57,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    const { replaceExisting = false, weekStart, weekEnd } = await request.json()
+    // Parse request body safely
+    let requestBody = {}
+    try {
+      const text = await request.text()
+      if (text) {
+        requestBody = JSON.parse(text)
+      }
+    } catch (parseError) {
+      // If JSON parsing fails, use empty object (for requests without body)
+      requestBody = {}
+    }
+
+    const { replaceExisting = false, weekStart, weekEnd } = requestBody as any
 
     // Determine the week to generate teams for
     let targetWeek

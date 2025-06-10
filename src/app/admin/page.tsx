@@ -767,7 +767,8 @@ export default function AdminPanel() {
     try {
       const response = await fetch('/api/prayer-teams', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       })
 
       const data = await response.json()
@@ -844,7 +845,8 @@ export default function AdminPanel() {
     try {
       const response = await fetch('/api/prayer-teams/clear', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       })
 
       const data = await response.json()
