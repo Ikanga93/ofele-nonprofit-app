@@ -59,6 +59,15 @@ export default function AdminPanel() {
   const [newsForm, setNewsForm] = useState({ title: '', content: '', eventDate: '', isEvent: false })
   const [submitting, setSubmitting] = useState(false)
 
+  // Overview data states
+  const [overviewData, setOverviewData] = useState({
+    totalUsers: 0,
+    activeSchedules: 0,
+    activePrayerSubjects: 0,
+    totalNews: 0,
+    currentWeekTeams: 0
+  })
+
   // Schedule management states
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [allUsers, setAllUsers] = useState<AllUsers[]>([])
@@ -84,6 +93,9 @@ export default function AdminPanel() {
   }, [])
 
   useEffect(() => {
+    if (activeTab === 'overview') {
+      fetchOverviewData()
+    }
     if (activeTab === 'schedules' || activeTab === 'users') {
       fetchSchedules()
       fetchAllUsers()
@@ -132,6 +144,40 @@ export default function AdminPanel() {
       }
     } catch (error) {
       console.error('Error fetching users:', error)
+    }
+  }
+
+  const fetchOverviewData = async () => {
+    try {
+      // Fetch users count
+      const usersResponse = await fetch('/api/auth/users')
+      const usersData = usersResponse.ok ? await usersResponse.json() : { users: [] }
+
+      // Fetch schedules count
+      const schedulesResponse = await fetch('/api/moderator-schedule')
+      const schedulesData = schedulesResponse.ok ? await schedulesResponse.json() : { schedules: [] }
+
+      // Fetch prayer subjects count
+      const prayerSubjectsResponse = await fetch('/api/prayer-subjects')
+      const prayerSubjectsData = prayerSubjectsResponse.ok ? await prayerSubjectsResponse.json() : { prayerSubjects: [] }
+
+      // Fetch news count
+      const newsResponse = await fetch('/api/news')
+      const newsData = newsResponse.ok ? await newsResponse.json() : { news: [] }
+
+      // Fetch current week prayer teams
+      const teamsResponse = await fetch('/api/prayer-teams')
+      const teamsData = teamsResponse.ok ? await teamsResponse.json() : { teams: [] }
+
+      setOverviewData({
+        totalUsers: usersData.users?.length || 0,
+        activeSchedules: schedulesData.schedules?.length || 0,
+        activePrayerSubjects: prayerSubjectsData.prayerSubjects?.filter((p: any) => p.isActive)?.length || 0,
+        totalNews: newsData.news?.length || 0,
+        currentWeekTeams: teamsData.teams?.length || 0
+      })
+    } catch (error) {
+      console.error('Error fetching overview data:', error)
     }
   }
 
@@ -481,6 +527,7 @@ export default function AdminPanel() {
 
       if (response.ok) {
         setMessage(`Successfully created ${data.count} prayer teams for this week!`)
+        await fetchOverviewData()
       } else {
         setError(data.error || 'Failed to generate prayer teams')
       }
@@ -507,6 +554,7 @@ export default function AdminPanel() {
 
       if (response.ok) {
         setMessage(`Successfully created ${data.count} moderator schedules for the next 4 weeks!`)
+        await fetchOverviewData()
       } else {
         setError(data.error || 'Failed to generate moderator schedule')
       }
@@ -560,6 +608,7 @@ export default function AdminPanel() {
       if (response.ok) {
         setMessage('Prayer subject created successfully!')
         setPrayerSubjectForm({ title: '', description: '' })
+        await fetchOverviewData()
       } else {
         setError(data.error || 'Failed to create prayer subject')
       }
@@ -588,6 +637,7 @@ export default function AdminPanel() {
       if (response.ok) {
         setMessage(`${newsForm.isEvent ? 'Event' : 'News'} created successfully!`)
         setNewsForm({ title: '', content: '', eventDate: '', isEvent: false })
+        await fetchOverviewData()
       } else {
         setError(data.error || 'Failed to create news/event')
       }
@@ -685,42 +735,54 @@ export default function AdminPanel() {
             <div className="space-y-4 sm:space-y-6">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Admin Overview</h2>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                <div className="bg-blue-50 p-3 sm:p-6 rounded-lg">
+                <button
+                  onClick={() => setActiveTab('users')}
+                  className="bg-blue-50 p-3 sm:p-6 rounded-lg hover:bg-blue-100 transition-colors text-left"
+                >
                   <div className="flex flex-col sm:flex-row sm:items-center">
                     <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mb-2 sm:mb-0" />
                     <div className="sm:ml-4">
-                      <p className="text-xs sm:text-sm font-medium text-blue-600">Prayer Teams</p>
-                      <p className="text-lg sm:text-2xl font-bold text-blue-900">Weekly</p>
+                      <p className="text-xs sm:text-sm font-medium text-blue-600">Total Users</p>
+                      <p className="text-lg sm:text-2xl font-bold text-blue-900">{overviewData.totalUsers}</p>
                     </div>
                   </div>
-                </div>
-                <div className="bg-green-50 p-3 sm:p-6 rounded-lg">
+                </button>
+                <button
+                  onClick={() => setActiveTab('schedules')}
+                  className="bg-green-50 p-3 sm:p-6 rounded-lg hover:bg-green-100 transition-colors text-left"
+                >
                   <div className="flex flex-col sm:flex-row sm:items-center">
                     <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 mb-2 sm:mb-0" />
                     <div className="sm:ml-4">
-                      <p className="text-xs sm:text-sm font-medium text-green-600">Schedules</p>
-                      <p className="text-lg sm:text-2xl font-bold text-green-900">Mon/Sat</p>
+                      <p className="text-xs sm:text-sm font-medium text-green-600">Active Schedules</p>
+                      <p className="text-lg sm:text-2xl font-bold text-green-900">{overviewData.activeSchedules}</p>
                     </div>
                   </div>
-                </div>
-                <div className="bg-purple-50 p-3 sm:p-6 rounded-lg">
+                </button>
+                <button
+                  onClick={() => setActiveTab('prayer-subjects')}
+                  className="bg-purple-50 p-3 sm:p-6 rounded-lg hover:bg-purple-100 transition-colors text-left"
+                >
                   <div className="flex flex-col sm:flex-row sm:items-center">
                     <HandHeart className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 mb-2 sm:mb-0" />
                     <div className="sm:ml-4">
-                      <p className="text-xs sm:text-sm font-medium text-purple-600">Prayer Subjects</p>
-                      <p className="text-lg sm:text-2xl font-bold text-purple-900">Active</p>
+                      <p className="text-xs sm:text-sm font-medium text-purple-600">Active Prayer Subjects</p>
+                      <p className="text-lg sm:text-2xl font-bold text-purple-900">{overviewData.activePrayerSubjects}</p>
                     </div>
                   </div>
-                </div>
-                <div className="bg-orange-50 p-3 sm:p-6 rounded-lg">
+                </button>
+                <button
+                  onClick={() => setActiveTab('news')}
+                  className="bg-orange-50 p-3 sm:p-6 rounded-lg hover:bg-orange-100 transition-colors text-left"
+                >
                   <div className="flex flex-col sm:flex-row sm:items-center">
                     <Newspaper className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600 mb-2 sm:mb-0" />
                     <div className="sm:ml-4">
-                      <p className="text-xs sm:text-sm font-medium text-orange-600">News & Events</p>
-                      <p className="text-lg sm:text-2xl font-bold text-orange-900">Latest</p>
+                      <p className="text-xs sm:text-sm font-medium text-orange-600">Total News & Events</p>
+                      <p className="text-lg sm:text-2xl font-bold text-orange-900">{overviewData.totalNews}</p>
                     </div>
                   </div>
-                </div>
+                </button>
               </div>
               <div className="bg-gray-50 p-4 sm:p-6 rounded-lg">
                 <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
@@ -824,6 +886,45 @@ export default function AdminPanel() {
                   <p className="text-green-700 text-xs sm:text-sm">
                     Weekend prayer sessions with extended time for fellowship
                   </p>
+                </div>
+              </div>
+
+              {/* Prayer Teams Info */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center">
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-2" />
+                    <h3 className="text-base sm:text-lg font-medium text-blue-900">Current Week Prayer Teams</h3>
+                  </div>
+                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                    {overviewData.currentWeekTeams} Teams
+                  </span>
+                </div>
+                <p className="text-blue-700 text-sm">
+                  Prayer teams are automatically generated weekly, pairing community members to pray for each other.
+                  {overviewData.currentWeekTeams === 0 && " Generate new teams to get started."}
+                </p>
+              </div>
+
+              <div className="bg-gray-50 p-4 sm:p-6 rounded-lg">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <button
+                    onClick={generatePrayerTeams}
+                    disabled={submitting}
+                    className="flex items-center justify-center p-3 sm:p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm sm:text-base"
+                  >
+                    <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                    Generate Prayer Teams
+                  </button>
+                  <button
+                    onClick={generateModeratorSchedule}
+                    disabled={submitting}
+                    className="flex items-center justify-center p-3 sm:p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm sm:text-base"
+                  >
+                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                    Generate Schedules
+                  </button>
                 </div>
               </div>
             </div>
