@@ -1,14 +1,19 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+const JWT_SECRET = process.env.JWT_SECRET || 'stone-creek-intercession-default-secret-key-change-in-production'
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12)
 }
 
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  return bcrypt.compare(password, hashedPassword)
+  try {
+    return await bcrypt.compare(password, hashedPassword)
+  } catch (error) {
+    console.error('Password verification error:', error)
+    return false
+  }
 }
 
 export function generateToken(userId: string, role: string): string {
@@ -19,7 +24,8 @@ export function verifyToken(token: string): { userId: string; role: string } | n
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string }
     return decoded
-  } catch {
+  } catch (error) {
+    console.error('Token verification error:', error)
     return null
   }
 } 

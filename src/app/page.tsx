@@ -610,22 +610,22 @@ export default function Home() {
 
   // Family Department Homepage
   if (user.department === 'FAMILY') {
-    return (
-      <div className="min-h-screen bg-gray-50">
+  return (
+    <div className="min-h-screen bg-gray-50">
         {/* Header for Family department users */}
-        <header className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Family Department</h1>
                   <p className="text-gray-600 mt-1 text-sm sm:text-base">Community Blog & Family Ministry</p>
-              </div>
-              
-              {/* Desktop Menu */}
-              <div className="hidden md:flex items-center space-x-4">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">Welcome, {user.fullName}</p>
-                  <p className="text-xs text-gray-600">
+            </div>
+            
+            {/* Desktop Menu */}
+            <div className="hidden md:flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">Welcome, {user.fullName}</p>
+                <p className="text-xs text-gray-600">
                       Family Department • {user.role === 'ADMIN' ? 'Administrator' : 'Member'}
                   </p>
                 </div>
@@ -1299,15 +1299,15 @@ export default function Home() {
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                           <h3 className="font-medium text-gray-900 break-words">{request.title}</h3>
                           <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
-                            {new Date(request.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
+                          {new Date(request.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
                         <p className="text-sm text-gray-700 break-words whitespace-pre-wrap">
                           {truncateContent(request.content)}
                         </p>
                         <p className="text-xs text-gray-500 break-words">
-                          {request.isAnonymous ? 'Anonymous' : `By ${request.user?.fullName || 'Unknown'}`}
-                        </p>
+                        {request.isAnonymous ? 'Anonymous' : `By ${request.user?.fullName || 'Unknown'}`}
+                      </p>
                       </div>
                     </div>
                   ))}
@@ -1374,20 +1374,20 @@ export default function Home() {
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                           <h3 className="font-medium text-gray-900 break-words">{item.title}</h3>
                           <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
-                            {item.isEvent && item.eventDate 
-                              ? new Date(item.eventDate).toLocaleDateString()
-                              : new Date(item.createdAt).toLocaleDateString()
-                            }
-                          </span>
-                        </div>
+                          {item.isEvent && item.eventDate 
+                            ? new Date(item.eventDate).toLocaleDateString()
+                            : new Date(item.createdAt).toLocaleDateString()
+                          }
+                        </span>
+                      </div>
                         <p className="text-sm text-gray-600 break-words whitespace-pre-wrap">
                           {truncateContent(item.content)}
                         </p>
-                        {item.isEvent && (
-                          <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mt-2">
-                            Event
-                          </span>
-                        )}
+                      {item.isEvent && (
+                        <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mt-2">
+                          Event
+                        </span>
+                      )}
                       </div>
                     </div>
                   ))}

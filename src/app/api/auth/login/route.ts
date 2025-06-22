@@ -14,12 +14,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Normalize email (lowercase and trim)
+    const normalizedEmail = email.toLowerCase().trim()
+
     // Find user by email
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { email: normalizedEmail }
     })
 
     if (!user) {
+      console.log(`Login attempt failed: User not found for email: ${normalizedEmail}`)
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
@@ -27,9 +31,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify password
+    console.log(`Verifying password for user: ${user.id} (${user.email})`)
     const isValidPassword = await verifyPassword(password, user.password)
 
     if (!isValidPassword) {
+      console.log(`Login attempt failed: Invalid password for user: ${user.id} (${user.email})`)
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
@@ -38,6 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Generate JWT token
     const token = generateToken(user.id, user.role)
+    console.log(`Login successful for user: ${user.id} (${user.email})`)
 
     // Create response with token in cookie
     const response = NextResponse.json({
@@ -45,7 +52,8 @@ export async function POST(request: NextRequest) {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
-        role: user.role
+        role: user.role,
+        department: user.department
       }
     })
 
@@ -53,7 +61,8 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 // 7 days
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: '/' // Ensure cookie is available across all paths
     })
 
     return response

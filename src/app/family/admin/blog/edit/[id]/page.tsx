@@ -135,7 +135,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
 
     setUploadingImage(true)
     const uploadFormData = new FormData()
-    uploadFormData.append('file', selectedFile)
+    uploadFormData.append('image', selectedFile)
 
     try {
       const response = await fetch('/api/upload', {
@@ -145,7 +145,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
 
       if (response.ok) {
         const data = await response.json()
-        return data.url
+        return data.imageUrl
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Failed to upload image')

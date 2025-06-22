@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile } from 'fs/promises'
+import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { verifyToken } from '@/lib/auth'
 
@@ -42,19 +42,29 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Create unique filename
+    // In production, use base64 data URLs for serverless compatibility
+    if (process.env.NODE_ENV === 'production') {
+      const base64 = buffer.toString('base64')
+      const dataUrl = `data:${file.type};base64,${base64}`
+      
+      return NextResponse.json({ 
+        success: true, 
+        imageUrl: dataUrl,
+        url: dataUrl, // Also include 'url' for backward compatibility
+        message: 'Image uploaded successfully' 
+      })
+    }
+
+    // Development environment - use local file system
     const timestamp = Date.now()
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
     const filename = `${timestamp}_${originalName}`
-
-    // Create uploads directory if it doesn't exist
     const uploadsDir = join(process.cwd(), 'public', 'uploads')
     
     try {
       await writeFile(join(uploadsDir, filename), buffer)
     } catch (error) {
       // If uploads directory doesn't exist, create it
-      const { mkdir } = await import('fs/promises')
       await mkdir(uploadsDir, { recursive: true })
       await writeFile(join(uploadsDir, filename), buffer)
     }
@@ -65,6 +75,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       imageUrl,
+      url: imageUrl, // Also include 'url' for backward compatibility
       message: 'Image uploaded successfully' 
     })
 
