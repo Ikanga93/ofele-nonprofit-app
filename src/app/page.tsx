@@ -73,6 +73,7 @@ export default function Home() {
   const [prayerRequests, setPrayerRequests] = useState<PrayerRequest[]>([])
   const [familyBoardPosts, setFamilyBoardPosts] = useState<FamilyBoardPost[]>([])
   const [loading, setLoading] = useState(true)
+  const [familyBoardLoading, setFamilyBoardLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [showFamilyForm, setShowFamilyForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -99,12 +100,14 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
+    // Always fetch family board posts first (public content)
+    fetchFamilyBoardPosts()
+    
+    // Only fetch authenticated content if user is logged in
     if (user) {
       fetchDashboardData()
       fetchPrayerRequests()
     }
-    // Always fetch family board posts (public content for homepage)
-    fetchFamilyBoardPosts()
   }, [user])
 
   const checkAuthStatus = async () => {
@@ -138,13 +141,18 @@ export default function Home() {
 
   const fetchFamilyBoardPosts = async () => {
     try {
-      const response = await fetch('/api/family-board')
+      setFamilyBoardLoading(true)
+      // Fetch only the first 5 posts for homepage to improve performance
+      const response = await fetch('/api/family-board?limit=5&page=1')
       if (response.ok) {
         const data = await response.json()
-        setFamilyBoardPosts(data.posts)
+        setFamilyBoardPosts(data.posts || [])
       }
     } catch (error) {
       console.error('Error fetching family board posts:', error)
+      setFamilyBoardPosts([]) // Set empty array on error
+    } finally {
+      setFamilyBoardLoading(false)
     }
   }
 
@@ -533,10 +541,25 @@ export default function Home() {
                 <Users className="h-5 w-5 text-blue-600 mr-2" />
                 Community Blog
               </h2>
+              {familyBoardPosts.length >= 5 && (
+                <Link 
+                  href="/family/admin/blog"
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium mt-2 sm:mt-0"
+                >
+                  View All Posts →
+                </Link>
+              )}
             </div>
 
             {/* Family Blog Posts */}
-            {familyBoardPosts.length > 0 ? (
+            {familyBoardLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                  <p className="text-gray-600 text-sm">Loading blog posts...</p>
+                </div>
+              </div>
+            ) : familyBoardPosts.length > 0 ? (
               <div className="space-y-4">
                 {familyBoardPosts.map((post) => (
                   <div key={post.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -750,15 +773,25 @@ export default function Home() {
                   <Users className="h-5 w-5 text-blue-600 mr-2" />
                   Family Blog Management
                 </h2>
-                {!showFamilyForm && (
-                  <button
-                    onClick={() => setShowFamilyForm(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm mt-2 sm:mt-0"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Blog Post
-                  </button>
-                )}
+                <div className="flex items-center space-x-3 mt-2 sm:mt-0">
+                  {familyBoardPosts.length >= 5 && (
+                    <Link 
+                      href="/family/admin/blog"
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      View All Posts →
+                    </Link>
+                  )}
+                  {!showFamilyForm && (
+                    <button
+                      onClick={() => setShowFamilyForm(true)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Blog Post
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Family Board Form */}
@@ -876,7 +909,14 @@ export default function Home() {
               )}
 
               {/* Family Board Posts */}
-              {familyBoardPosts.length > 0 ? (
+              {familyBoardLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                    <p className="text-gray-600 text-sm">Loading blog posts...</p>
+                  </div>
+                </div>
+              ) : familyBoardPosts.length > 0 ? (
                 <div className="space-y-4">
                   {familyBoardPosts.map((post) => (
                     <div key={post.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">

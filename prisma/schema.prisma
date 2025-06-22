@@ -117,6 +117,10 @@ model FamilyBoard {
 
   user User @relation(fields: [userId], references: [id])
 
+  // Add indexes for better query performance
+  @@index([isDeleted, createdAt(sort: Desc)]) // For main listing queries
+  @@index([userId]) // For user's posts
+  @@index([createdAt(sort: Desc)]) // For chronological ordering
   @@map("family_board")
 }
 

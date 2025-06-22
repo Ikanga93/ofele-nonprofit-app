@@ -44,6 +44,11 @@ export async function POST(request: NextRequest) {
 
     // In production, use base64 data URLs for serverless compatibility
     if (process.env.NODE_ENV === 'production') {
+      // For large images, warn about performance impact
+      if (file.size > 1024 * 1024) { // If larger than 1MB
+        console.warn(`Large image uploaded (${Math.round(file.size / 1024)}KB). Consider using cloud storage for better performance.`)
+      }
+      
       const base64 = buffer.toString('base64')
       const dataUrl = `data:${file.type};base64,${base64}`
       
@@ -51,7 +56,8 @@ export async function POST(request: NextRequest) {
         success: true, 
         imageUrl: dataUrl,
         url: dataUrl, // Also include 'url' for backward compatibility
-        message: 'Image uploaded successfully' 
+        message: 'Image uploaded successfully',
+        size: file.size // Include size info for debugging
       })
     }
 

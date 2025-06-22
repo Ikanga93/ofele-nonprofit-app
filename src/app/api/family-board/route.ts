@@ -1,23 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
+import { PerformanceMonitor } from '@/lib/performance'
 
 export async function GET(request: NextRequest) {
   try {
+    // Get query parameters for pagination
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '10')
+    const offset = (page - 1) * limit
+
     // Public endpoint - anyone can view blog posts (only non-deleted)
-    const posts = await prisma.familyBoard.findMany({
-      where: {
-        isDeleted: false
-      },
-      include: {
-        user: {
-          select: { fullName: true, role: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
+    // Optimize query by limiting results and selecting only needed fields
+    const posts = await PerformanceMonitor.measure('family-board-query', async () => {
+      return await prisma.familyBoard.findMany({
+        where: {
+          isDeleted: false
+        },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          imageUrl: true,
+          views: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: { 
+              fullName: true, 
+              role: true 
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset
+      })
     })
 
-    return NextResponse.json({ posts })
+    // Get total count for pagination (only if needed)
+    const totalCount = page === 1 ? await PerformanceMonitor.measure('family-board-count', async () => {
+      return await prisma.familyBoard.count({
+        where: { isDeleted: false }
+      })
+    }) : null
+
+    return NextResponse.json({ 
+      posts,
+      pagination: {
+        page,
+        limit,
+        total: totalCount,
+        hasMore: posts.length === limit
+      }
+    })
   } catch (error) {
     console.error('Error fetching family board posts:', error)
     return NextResponse.json(
