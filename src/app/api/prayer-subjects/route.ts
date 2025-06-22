@@ -2,9 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Verify authentication and get user department
+    const token = request.cookies.get('auth-token')?.value
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const decoded = verifyToken(token)
+    if (!decoded) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    // Get user's department
+    const currentUser = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { department: true }
+    })
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
     const prayerSubjects = await prisma.prayerSubject.findMany({
+      where: {
+        department: currentUser.department
+      },
       orderBy: { createdAt: 'desc' }
     })
 
@@ -31,6 +55,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
+    // Get admin's department
+    const admin = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { department: true }
+    })
+
+    if (!admin) {
+      return NextResponse.json({ error: 'Admin not found' }, { status: 404 })
+    }
+
     const { title, description } = await request.json()
 
     if (!title) {
@@ -43,7 +77,8 @@ export async function POST(request: NextRequest) {
     const subject = await prisma.prayerSubject.create({
       data: {
         title,
-        description: description || null
+        description: description || null,
+        department: admin.department
       }
     })
 

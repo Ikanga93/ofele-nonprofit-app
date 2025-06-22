@@ -12,7 +12,8 @@ export default function Register() {
     birthday: '',
     password: '',
     confirmPassword: '',
-    role: 'MEMBER'
+    role: 'MEMBER',
+    department: 'INTERCESSION'
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -50,7 +51,8 @@ export default function Register() {
           email: formData.email,
           birthday: formData.birthday,
           password: formData.password,
-          role: formData.role
+          role: formData.role,
+          department: formData.department
         })
       })
 
@@ -85,7 +87,7 @@ export default function Register() {
           <HandHeart className="h-12 w-12 text-purple-600" />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Join Stone Creek Intercession
+          Join Stone Creek Departments
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           Or{' '}
@@ -160,6 +162,27 @@ export default function Register() {
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="department" className="block text-sm font-medium text-gray-700">
+                Department
+              </label>
+              <div className="mt-1">
+                <select
+                  id="department"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                >
+                  <option value="INTERCESSION">Intercession</option>
+                  <option value="FAMILY">Family</option>
+                </select>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Choose your department to access relevant features and connect with your community
+              </p>
             </div>
 
             <div>

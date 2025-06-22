@@ -14,20 +14,22 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String     @id @default(cuid())
+  email     String     @unique
   fullName  String
   birthday  DateTime
   password  String
-  role      UserRole @default(MEMBER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      UserRole   @default(MEMBER)
+  department Department @default(INTERCESSION)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   // Relations
   prayerTeamMember1 PrayerTeam[] @relation("Member1")
   prayerTeamMember2 PrayerTeam[] @relation("Member2")
   moderatorSchedules ModeratorSchedule[]
   prayerRequests    PrayerRequest[]
+  familyBoardPosts  FamilyBoard[]
 
   @@map("users")
 }
@@ -63,24 +65,26 @@ model ModeratorSchedule {
 }
 
 model PrayerSubject {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean    @default(true)
+  department  Department @default(INTERCESSION)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   @@map("prayer_subjects")
 }
 
 model News {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   content     String
   eventDate   DateTime?
-  isEvent     Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isEvent     Boolean    @default(false)
+  department  Department @default(INTERCESSION)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   @@map("news")
 }
@@ -99,9 +103,31 @@ model PrayerRequest {
   @@map("prayer_requests")
 }
 
+model FamilyBoard {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  imageUrl  String?  // Optional image URL for the post
+  userId    String
+  views     Int      @default(0) // Track view count
+  isDeleted Boolean  @default(false) // Soft delete
+  deletedAt DateTime? // When it was deleted
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("family_board")
+}
+
 enum UserRole {
   ADMIN
   MEMBER
+}
+
+enum Department {
+  INTERCESSION
+  FAMILY
 }
 
 enum DayType {

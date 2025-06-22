@@ -4,7 +4,7 @@ import { hashPassword } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const { fullName, email, birthday, password, role } = await request.json()
+    const { fullName, email, birthday, password, role, department } = await request.json()
 
     // Validate required fields
     if (!fullName || !email || !birthday || !password) {
@@ -26,15 +26,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check admin limit (max 3 admins)
+    // Check admin limit (max 3 admins per department)
     if (role === 'ADMIN') {
       const adminCount = await prisma.user.count({
-        where: { role: 'ADMIN' }
+        where: { 
+          role: 'ADMIN',
+          department: department || 'INTERCESSION'
+        }
       })
 
       if (adminCount >= 3) {
         return NextResponse.json(
-          { error: 'Maximum number of admins (3) already reached' },
+          { error: 'Maximum number of admins (3) already reached for this department' },
           { status: 400 }
         )
       }
@@ -53,13 +56,15 @@ export async function POST(request: NextRequest) {
         email,
         birthday: birthdayDate,
         password: hashedPassword,
-        role: role || 'MEMBER'
+        role: role || 'MEMBER',
+        department: department || 'INTERCESSION'
       },
       select: {
         id: true,
         fullName: true,
         email: true,
         role: true,
+        department: true,
         birthday: true,
         createdAt: true
       }

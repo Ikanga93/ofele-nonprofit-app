@@ -25,6 +25,7 @@ interface User {
   fullName: string
   email: string
   role: string
+  department: string
 }
 
 interface Schedule {
@@ -44,6 +45,7 @@ interface AllUsers {
   fullName: string
   email: string
   role: string
+  department: string
   createdAt: string
 }
 
@@ -1116,7 +1118,7 @@ export default function AdminPanel() {
                   <Settings className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 mr-2 flex-shrink-0" />
                   <span className="truncate">Admin Panel</span>
                 </h1>
-                <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage Stone Creek Intercession</p>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage Stone Creek Departments</p>
               </div>
             </div>
             <div className="text-right hidden sm:block">
@@ -1643,6 +1645,9 @@ export default function AdminPanel() {
                             Role
                           </th>
                           <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                            Department
+                          </th>
+                          <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                             Joined
                           </th>
                         </tr>
@@ -1669,6 +1674,9 @@ export default function AdminPanel() {
                               }`}>
                                 {user.role}
                               </span>
+                            </td>
+                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                              {user.department}
                             </td>
                             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
                               {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}

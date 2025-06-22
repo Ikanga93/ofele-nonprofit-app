@@ -5,15 +5,50 @@ import { getWeekRange, shuffleArray } from '@/lib/utils'
 
 export async function GET(request: NextRequest) {
   try {
+    // Verify authentication and get user department
+    const token = request.cookies.get('auth-token')?.value
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const decoded = verifyToken(token)
+    if (!decoded) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    // Get user's department
+    const currentUser = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { department: true }
+    })
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
     const { searchParams } = new URL(request.url)
     const all = searchParams.get('all') === 'true'
     
-    let whereClause = {}
+    let whereClause: any = {
+      OR: [
+        {
+          member1: {
+            department: currentUser.department
+          }
+        },
+        {
+          member2: {
+            department: currentUser.department
+          }
+        }
+      ]
+    }
     
     if (!all) {
       // Default behavior: only current week teams
       const currentWeek = getWeekRange(new Date())
       whereClause = {
+        ...whereClause,
         weekStart: {
           gte: currentWeek.start,
           lte: currentWeek.end
@@ -25,10 +60,10 @@ export async function GET(request: NextRequest) {
       where: whereClause,
       include: {
         member1: {
-          select: { id: true, fullName: true, email: true }
+          select: { id: true, fullName: true, email: true, department: true }
         },
         member2: {
-          select: { id: true, fullName: true, email: true }
+          select: { id: true, fullName: true, email: true, department: true }
         }
       },
       orderBy: { weekStart: 'desc' }
@@ -57,6 +92,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
+    // Get admin's department
+    const admin = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { department: true }
+    })
+
+    if (!admin) {
+      return NextResponse.json({ error: 'Admin not found' }, { status: 404 })
+    }
+
     // Parse request body safely
     let requestBody = {}
     try {
@@ -83,19 +128,31 @@ export async function POST(request: NextRequest) {
       targetWeek = getWeekRange(new Date())
     }
     
-    // Check if teams already exist for this week
+    // Check if teams already exist for this week (for this department)
     const existingTeams = await prisma.prayerTeam.findMany({
       where: {
         weekStart: {
           gte: targetWeek.start,
           lte: targetWeek.end
-        }
+        },
+        OR: [
+          {
+            member1: {
+              department: admin.department
+            }
+          },
+          {
+            member2: {
+              department: admin.department
+            }
+          }
+        ]
       }
     })
 
     if (existingTeams.length > 0 && !replaceExisting) {
       return NextResponse.json(
-        { error: 'Prayer teams already exist for this week. Use replaceExisting: true to replace them.' },
+        { error: 'Prayer teams already exist for this week in your department. Use replaceExisting: true to replace them.' },
         { status: 400 }
       )
     }
@@ -107,19 +164,34 @@ export async function POST(request: NextRequest) {
           weekStart: {
             gte: targetWeek.start,
             lte: targetWeek.end
-          }
+          },
+          OR: [
+            {
+              member1: {
+                department: admin.department
+              }
+            },
+            {
+              member2: {
+                department: admin.department
+              }
+            }
+          ]
         }
       })
     }
 
-    // Get all users
+    // Get all users from the same department
     const users = await prisma.user.findMany({
+      where: {
+        department: admin.department
+      },
       select: { id: true, fullName: true }
     })
 
     if (users.length < 2) {
       return NextResponse.json(
-        { error: 'Need at least 2 users to create prayer teams' },
+        { error: 'Need at least 2 users in your department to create prayer teams' },
         { status: 400 }
       )
     }
@@ -154,7 +226,7 @@ export async function POST(request: NextRequest) {
 
     const action = replaceExisting && existingTeams.length > 0 ? 'replaced' : 'created'
     return NextResponse.json({ 
-      message: `${action === 'replaced' ? 'Replaced' : 'Created'} ${createdTeams.count} prayer teams`,
+      message: `${action === 'replaced' ? 'Replaced' : 'Created'} ${createdTeams.count} prayer teams for ${admin.department} department`,
       count: createdTeams.count,
       action,
       weekStart: targetWeek.start,
